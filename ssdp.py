@@ -16,7 +16,7 @@
 from __future__ import print_function
 from __future__ import division
 import six
-from six.moves import xrange
+#from six.moves import xrange
 import socket
 #from applog import *
 import struct
@@ -205,7 +205,7 @@ def discover(serviceNameList, ssdpServiceVerifyOkCallback=None, numAttempts=3, t
 	#
 	# loop for sending M-SEARCH messages and listening for unicasted responses/multicasted service advertisements
 	#
-	for nthAttempt in xrange(numAttempts):
+	for nthAttempt in six.moves.xrange(numAttempts):
 	
 		try:
 		

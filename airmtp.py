@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 #############################################################################
@@ -14,8 +14,8 @@
 from __future__ import print_function
 from __future__ import division
 import six
-from six.moves import xrange
-from six.moves import cPickle as pickle
+#from six.moves import xrange
+#from six.moves import cPickle as pickle
 import argparse
 import mtpwifi
 from mtpdef import *
@@ -635,7 +635,7 @@ def processCmdLine():
 	parser.add_argument('--extlist', help='Type of image/file(s) to download. Ex: \"--extlist NEF\". Multiple extensions can be specified. Use \"<NOEXT>\" to include files that don\'t have extensions. Default is to download all file types', default=None, nargs='+', metavar='extension', required=False)
 	parser.add_argument('--startdate', help='Only include image/file(s) captured on or later than date. Date-only Ex: --startdate 12/05/14. Date+Time Example: --startdate \"12/05/14 15:30:00\"', metavar="date", required=False)
 	parser.add_argument('--enddate', help='Only include image/file(s) captured on or earlier than date or date+time. Date without a specified time is inclusive, so for example --enddate 06/12/14 is interpreted as 06/12/14 23:59:59', metavar="date", required=False)
-	parser.add_argument('--outputdir', type=str, help='Directory to store image/file(s) to.  Default is current directory. No ending backslash is necessary. If path contains any spaces enclose it in double quotes. Example: --outputdir \"c:\My Documents\"', default=None, metavar="path", required=False)
+	parser.add_argument('--outputdir', type=str, help='Directory to store image/file(s) to.  Default is current directory. No ending backslash is necessary. If path contains any spaces enclose it in double quotes. Example: --outputdir \"c:\\My Documents\"', default=None, metavar="path", required=False)
 	parser.add_argument('--ifexists', type=str.lower, choices=['uniquename', 'skip', 'overwrite', 'prompt', 'exit'], help='Action to take if file with same name already exists. Default is "%(default)s"', default='uniquename', required=False)
 	parser.add_argument('--downloadhistory', type=str.lower, choices=['skipfiles', 'ignore', 'clear' ], help='\'skipfiles\' means that files in history (ie, previously downloaded) will be skipped and not downloaded. Default is "%(default)s"', default='skipfiles', required=False)
 	parser.add_argument('--onlyfolders', help='Only include image/file(s) existing in specified camera folders.. Ex: \"--onlyfolders 100D7200 101D7200\". Default is to include all folders', default=None, nargs='+', metavar="camera_folder", required=False)
@@ -794,7 +794,7 @@ def mtpCountedUtf16ToPythonUnicodeStr(data):
 	unicodeStr = six.text_type(data[1:1+utf16ByteLenIncludingNull-2], 'utf-16')
 	
 	# some Nikon strings have trailing NULLs for padding - remove them
-	for charPos in reversed(xrange(len(unicodeStr))):
+	for charPos in reversed(six.moves.xrange(len(unicodeStr))):
 		if unicodeStr[charPos] != '\x00':
 			break;
 	unicodeStr = unicodeStr[0:charPos+1]	# ok if original string was null-only string
@@ -806,7 +806,7 @@ def mtpCountedUtf16ToPythonUnicodeStr(data):
 # Removes specified leading characters from string
 #
 def removeLeadingCharsFromStr(str, charsToRemoveSet):
-	for charPos in xrange(len(str)):
+	for charPos in six.moves.xrange(len(str)):
 		if str[charPos] not in charsToRemoveSet:
 			break;
 	return str[charPos:]
@@ -826,7 +826,7 @@ def parseMtpCountedList(data, elementSizeInBytes):
 	theList = list()
 	(countEntries,) = struct.unpack('<I', data[0:4])
 	offset = 4
-	for entryIndex in xrange(countEntries):
+	for entryIndex in six.moves.xrange(countEntries):
 		(entry,) = struct.unpack('<' + elementSizeToUnpackStr[elementSizeInBytes], data[offset:offset+elementSizeInBytes])
 		offset += elementSizeInBytes
 		theList.append(entry)
@@ -988,7 +988,7 @@ def convertGuidStrToLongs(guidHexStr):
 		#
 		macAddressFieldList = guidHexStr.split(':')
 		guidLow = 0x0000000000000000
-		for nthField in xrange(len(macAddressFieldList)):
+		for nthField in six.moves.xrange(len(macAddressFieldList)):
 			guidLow |= int(macAddressFieldList[nthField], 16) << nthField*8		
 		if len(macAddressFieldList) == 6:
 			# Sony preprends 0xFFFF to MAC addr to form the full 64-bit lower GUID
@@ -1363,14 +1363,14 @@ def selectMtpStorageId():
 	countCardSlots = len(mtpStorageIds.storageIdsList)
 
 	applog_d("All Storage IDs:")
-	for i in xrange(0, len(mtpStorageIds.storageIdsList)):
+	for i in six.moves.xrange(0, len(mtpStorageIds.storageIdsList)):
 		applog_d("  storageId[{:d}] = 0x{:08x}".format(i, mtpStorageIds.storageIdsList[i]))
 		
 	# build a bitmap of which cards slots have media cards
 	cardsPresentBitmap = 0x00
 	firstCardPresent = -1
 	countCardsPresent = 0
-	for i in xrange(0, countCardSlots):
+	for i in six.moves.xrange(0, countCardSlots):
 		if (mtpStorageIds.storageIdsList[i] & MTP_STORAGEID_PresenceBit):
 			if firstCardPresent == -1:
 				firstCardPresent = i
@@ -1416,7 +1416,7 @@ def getMtpStorageInfo():
 		g.mtpStorageInfoList.append(mtpStorageInfo)
 	else:
 		countCardSlots = len(g.mtpStorageIds.storageIdsList)
-		for i in xrange(0, countCardSlots):
+		for i in six.moves.xrange(0, countCardSlots):
 			storageId = g.mtpStorageIds.storageIdsList[i]
 			if (storageId & MTP_STORAGEID_PresenceBit):				
 				mtpTcpCmdResult = mtpwifi.execMtpOp(g.socketPrimary, MTP_OP_GetStorageInfo, struct.pack('<I', storageId))
@@ -1459,7 +1459,7 @@ def saveMtpObjectsToDiskCache():
 	objHandlesList = []
 	countObjs = MtpObject.getCount()
 	mtpObject = MtpObject.getOldest()
-	for nObjInex in xrange(0, countObjs):
+	for nObjInex in six.moves.xrange(0, countObjs):
 		mtpObjectInfoList.append(mtpObject.mtpObjectInfo)
 		objHandlesList.append(mtpObject.mtpObjectHandle)
 		mtpObject = mtpObject.getNewer()
@@ -1483,7 +1483,7 @@ def saveMtpObjectsToDiskCache():
 	# when loadMtpObjectsInfoCache() load this serialization data he generates a hash of the loaded
 	# data and compares it against the hash that was generated+saved here
 	#
-	mtpObjectInfoCacheAsPickleBytes = pickle.dumps(mtpObjectInfoCacheTuple)	# generate byte array of the tuple
+	mtpObjectInfoCacheAsPickleBytes = six.moves.cPickle.dumps(mtpObjectInfoCacheTuple)	# generate byte array of the tuple
 	hashOfMtpObjectInfoCacheTuple = hashlib.sha512(mtpObjectInfoCacheAsPickleBytes).hexdigest()	# generate a SHA-512 hash digest, represented in hex ASCII
 
 	#
@@ -1495,14 +1495,14 @@ def saveMtpObjectsToDiskCache():
 	try:
 		fMtpObjectCache = open(mtpObjectInfoCacheFilename, "wb")
 		fMtpObjectCache.write(mtpObjectInfoCacheAsPickleBytes)			# write the tuple. note we're using the already-pickled data instead of calling dump(). this is for performance
-		pickle.dump(hashOfMtpObjectInfoCacheTuple, fMtpObjectCache)		# write the SHA-512 hash digest
+		six.moves.cPickle.dump(hashOfMtpObjectInfoCacheTuple, fMtpObjectCache)		# write the SHA-512 hash digest
 		fMtpObjectCache.close()
 	except IOError as e:
 		if fMtpObjectCache:
 			fMtpObjectCache.close()				
 		applog_e("I/O error writing obj hash to {:s}, cache will not be available next session: {:s}".format(mtpObjectInfoCacheFilename, str(e)))
 		deleteFileIgnoreErrors(mtpObjectInfoCacheFilename)	# delete cache in case some (partial) data was written before exception
-	except (ImportError, pickle.PickleError, ValueError, AttributeError):
+	except (ImportError, six.moves.cPickle.PickleError, ValueError, AttributeError):
 		# ImportError if the serialized data refers to a module that doesn't exist (changed module names between versions)
 		# PickleError if the decoding of the serialized data failed (corrupt data, modified format between versions, etc...
 		# ValueError if importing from different pickle protoocl
@@ -1543,11 +1543,11 @@ def loadMtpObjectInfoCacheFromDisk():
 		fMtpObjectCache = None # needed so that exception handlers can know whether the file was opened before the exception and thus needs closing
 		try:
 			fMtpObjectCache = open(mtpObjectInfoCacheFilename, "rb")
-			mtpObjectInfoCacheTuple = pickle.load(fMtpObjectCache)
-			hashOfMtpObjectInfoCacheTuple_Loaded = pickle.load(fMtpObjectCache)
+			mtpObjectInfoCacheTuple = six.moves.cPickle.load(fMtpObjectCache)
+			hashOfMtpObjectInfoCacheTuple_Loaded = six.moves.cPickle.load(fMtpObjectCache)
 			fMtpObjectCache.close()
 			
-			mtpObjectInfoCacheAsPickleBytes = pickle.dumps(mtpObjectInfoCacheTuple)
+			mtpObjectInfoCacheAsPickleBytes = six.moves.cPickle.dumps(mtpObjectInfoCacheTuple)
 			hashOfMtpObjectInfoCacheTuple_Calculated = hashlib.sha512(mtpObjectInfoCacheAsPickleBytes).hexdigest()
 		except IOError as e:
 			if fMtpObjectCache:
@@ -1606,7 +1606,7 @@ def loadMtpObjectInfoCacheFromDisk():
 			format(len(mtpObjectInfoCacheTuple.mtpObjectInfoList), str(datetime.timedelta(seconds=cacheAgeSeconds))))
 		if isDebugLog():
 			applog_d("MTP object cache entries [count={:d}]".format(len(mtpObjectInfoCacheTuple.mtpObjectInfoList)))
-			for i in xrange(len(mtpObjectInfoCacheTuple.mtpObjectInfoList)):
+			for i in six.moves.xrange(len(mtpObjectInfoCacheTuple.mtpObjectInfoList)):
 				applog_d("Entry {:4d}, handle = 0x{:08x}: {:s}".format(i, mtpObjectInfoCacheTuple.objHandlesList[i], str(mtpObjectInfoCacheTuple.mtpObjectInfoList[i])))
 				
 		#
@@ -1724,7 +1724,7 @@ def loadAndValidateMtpObjectInfoCacheFromDisk(objHandlesFromCameraList):
 	#
 	bInvalidateCache = False
 	cachedMtpObjectInfoListDict = {}
-	for nObjIndex in xrange(0, len(mtpObjectInfoCacheTuple.mtpObjectInfoList)):
+	for nObjIndex in six.moves.xrange(0, len(mtpObjectInfoCacheTuple.mtpObjectInfoList)):
 	
 		objHandle = mtpObjectInfoCacheTuple.objHandlesList[nObjIndex]
 		cachedMtpObjectInfo = mtpObjectInfoCacheTuple.mtpObjectInfoList[nObjIndex]
@@ -1858,7 +1858,7 @@ def createMtpObjectFromHandle(objHandle, createMtpObjectStatsStruct=None, cached
 # 
 def createMtpObjectsFromHandleList(objHandlesList, createMtpObjectStatsStruct=None, cachedMtpObjectInfoListDict=None, fFindAndCreateAntecendentDirs=True):
 	numObjectHandles = len(objHandlesList)
-	for nObjIndex in xrange(0, numObjectHandles):
+	for nObjIndex in six.moves.xrange(0, numObjectHandles):
 		consoleWriteLine("\rRetrieving list of images/files from camera: {:d}/{:d}     ".format(nObjIndex, numObjectHandles))
 		createMtpObjectFromHandle(objHandlesList[nObjIndex], createMtpObjectStatsStruct, cachedMtpObjectInfoListDict, fFindAndCreateAntecendentDirs)
 	consoleClearLine()
@@ -2993,7 +2993,7 @@ def printMtpObjectDirectoryListing():
 	applog_i("        {:4d} File(s)  {:13,} bytes".format(countFilesListed, totalBytesOfImagesInObjectsListed))
 	applog_i("        {:4d} Dir(s)  {:13,} bytes free {:s}".format(MtpObject._CountMtpObjectDirectories, g.mtpStorageInfoList[0].freeSpaceBytes,\
 				"[CARD 1]" if g.countCardsUsed > 1 else ""))
-	for cardIndex in xrange(1, g.countCardsUsed):
+	for cardIndex in six.moves.xrange(1, g.countCardsUsed):
 		applog_i("                     {:13,} bytes free [CARD {:d}]".format(g.mtpStorageInfoList[cardIndex].freeSpaceBytes, cardIndex+1))
 
 
@@ -3141,7 +3141,7 @@ def syncCameraDateTimeIfNecessary():
 # 
 #
 def printSpinningProgressCharToConsole():
-	progressChars = "-\|/"
+	progressChars = "-\\|/"
 	
 	if not hasattr(printSpinningProgressCharToConsole, "lastProgressCharPrinted"):	# static variable to track last progress character printed
 		printSpinningProgressCharToConsole.lastProgressCharPrinted = -1
@@ -3160,7 +3160,7 @@ MtpEventTuple = namedtuple('MtpEvent', 'eventCode eventParameter')
 def parseNikonMtpEventData(data):
 	mtpEventTupleList = []
 	(eventCount,) = struct.unpack('<H', data[0:2])
-	for nthEvent in xrange(eventCount):
+	for nthEvent in six.moves.xrange(eventCount):
 		(eventCode, eventParameter) = struct.unpack('<HI', data[2+nthEvent*6:2+nthEvent*6 + 6])
 		mtpEventTupleList.append(MtpEventTuple(eventCode, eventParameter))
 	return mtpEventTupleList
@@ -3171,7 +3171,7 @@ def parseNikonMtpEventData(data):
 # 
 def genNikonEventListDescription(mtpEventList):
 	str = ""
-	for nthEvent in xrange(len(mtpEventList)):
+	for nthEvent in six.moves.xrange(len(mtpEventList)):
 		if mtpEventList[nthEvent].eventCode == MTP_EVENT_DevicePropChanged:
 			parameterDesc = getMtpDevicePropDesc(mtpEventList[nthEvent].eventParameter)
 		else:
@@ -3216,7 +3216,7 @@ def realTimeCapture_NikonEventsMethod():
 				applog_d(genNikonEventListDescription(nikonMtpEventList))
 				countNewFileObjects = 0
 				firstNewMtpFileObject = None
-				for nthEvent in xrange(len(nikonMtpEventList)):
+				for nthEvent in six.moves.xrange(len(nikonMtpEventList)):
 					if nikonMtpEventList[nthEvent].eventCode == MTP_EVENT_ObjectAdded:
 						objHandle = nikonMtpEventList[nthEvent].eventParameter
 						if MtpObject.getByMtpObjectHandle(objHandle):
